@@ -1,0 +1,2 @@
+HelloRequest.name 	max_size:32
+HelloReply.message 	max_size:32
