@@ -45,6 +45,7 @@ COBJ :=
 
 GEN_HDR :=
 GEN_CSRC :=
+GEN_PY :=
 
 HDR += $(shell find * -name '*.h')
 CSRC += $(shell find * -name '*.c')
@@ -54,6 +55,9 @@ GEN_CSRC += hello.pb.c
 
 GEN_HDR += hello.grpc.pb.h
 GEN_CSRC += hello.grpc.pb.c
+
+GEN_PY += hello_pb2_grpc.py
+GEN_PY += hello_pb2.py
 
 $(foreach _h,$(GEN_HDR),\
 $(eval .PRECIOUS: $(_h)) \
@@ -70,7 +74,13 @@ COBJ += $(CSRC:.c=.o)
 
 OBJ := $(COBJ)
 
-all: $(LIB) $(EXE)
+all: $(LIB) $(EXE) $(GEN_PY)
+
+%_pb2.py: %.proto
+	python -m grpc_tools.protoc -I . --python_out=. --grpc_python_out=. $<
+
+%_pb2_grpc.py: %_pb2.py
+	touch $@
 
 %.grpc.pb.h: %.proto
 	protoc --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_c_plugin` $<
@@ -100,4 +110,4 @@ check:
 	LD_LIBRARY_PATH=$(NANOPB_DIR) ./$(EXE)
 
 clean:
-	rm -f $(OBJ) $(GEN_CSRC) $(GEN_HDR) $(LIB) $(EXE)
+	rm -Rf $(OBJ) $(GEN_CSRC) $(GEN_HDR) $(LIB) $(EXE) $(GEN_PY) __pycache__
